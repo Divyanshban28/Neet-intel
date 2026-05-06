@@ -58,8 +58,33 @@ elif nav == "New Test Entry":
                 st.json(metrics)
 
 elif nav == "History":
-    st.title("📜 Previous Tests")
-    for test in reversed(history):
-        with st.expander(f"{test['meta']['date']} - {test['meta']['name']}"):
-            st.write(f"**Score:** {test['meta']['score']}")
-            st.write(test['subjects'])
+    st.title("📜 Past Exam Logs")
+    
+    if not history:
+        st.info("No history to display.")
+    else:
+        # We enumerate the original history to keep track of real indexes
+        # Then we reverse it for display
+        indexed_history = list(enumerate(history))
+        
+        for original_index, test in reversed(indexed_history):
+            test_meta = test.get('meta', {})
+            display_name = f"{test_meta.get('date', 'N/A')} | {test_meta.get('name', 'Unnamed Test')}"
+            
+            with st.expander(display_name):
+                st.write(f"**Score:** {test_meta.get('score', 0)}")
+                st.json(test)
+                
+                # Use columns to align the delete button to the right
+                col_space, col_del = st.columns([0.8, 0.2])
+                
+                # Unique key for each button using the original index
+                if col_del.button("🗑️ Delete Test", key=f"del_{original_index}"):
+                    # Double-check confirmation
+                    st.warning(f"Are you sure you want to delete {display_name}?")
+                    if st.button("Confirm Permanent Delete", key=f"conf_{original_index}"):
+                        if delete_test(original_index):
+                            st.success("Test deleted successfully!")
+                            st.rerun() # Refresh the app to show updated history
+                        else:
+                            st.error("Failed to delete from cloud.")
