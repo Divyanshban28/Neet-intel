@@ -40,3 +40,17 @@ def get_metrics(meta, subjects, logs):
         "reasons": dict(reasons),
         "hotspots": Counter([l['chapter'] for l in logs]).most_common(3)
     }
+
+
+def delete_test(index):
+    """Removes a test at a specific index and updates the Gist."""
+    history = load_data()
+    if 0 <= index < len(history):
+        # Remove the test at the given index
+        history.pop(index)
+        
+        # Sync the shortened list back to GitHub
+        payload = {"files": {"tests.json": {"content": json.dumps(history, indent=2)}}}
+        res = requests.patch(URL, headers=HEADERS, json=payload)
+        return res.status_code == 200
+    return False
